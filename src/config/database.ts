@@ -39,10 +39,6 @@ export const AppDataSource = new DataSource({
     `${basePath}/modules/coupon/coupon.entity.${extension}`,
     `${basePath}/modules/address/address.entity.${extension}`,
     `${basePath}/modules/seller/entities/seller.entity.${extension}`,
-    `${basePath}/modules/shipping/shipping-zone.entity.${extension}`,
-    `${basePath}/modules/shipping/shipping-method.entity.${extension}`,
-    `${basePath}/modules/shipping/shipping-rate.entity.${extension}`,
-    `${basePath}/modules/category-restrictions/category-restriction.entity.${extension}`,
   ],
 
   migrations: [`${basePath}/migrations/*.${extension}`],

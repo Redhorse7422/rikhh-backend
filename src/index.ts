@@ -8,8 +8,7 @@ import { Router as V1Router } from "./apiV1.routes";
 import authRoutes from "./modules/auth/routes/auth.routes";
 import guestMigrationRoutes from "./modules/guest-migration/guest-migration.routes";
 import { requestLogger } from "./common/middlewares/request-logger.middleware";
-// import { filtersToWhereJson } from "./common/middlewares/filtersToWhereJson";
-// import qs from "qs";
+
 
 dotenv.config();
 

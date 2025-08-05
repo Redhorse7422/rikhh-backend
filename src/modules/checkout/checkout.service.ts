@@ -29,13 +29,11 @@ import { paymentService } from "../../common/services/payment.service";
 import { shippingService } from "../../common/services/shipping.service";
 import { taxService } from "../../common/services/tax.service";
 import { emailService } from "../../common/services/email.service";
-import { ShippingIntegrationService } from "../shipping/shipping-integration.service";
-import { ShippingRateService } from "../shipping/shipping-rate.service";
-import { ShippingMethodService } from "../shipping/shipping-method.service";
-import { ShippingRate } from "../shipping/shipping-rate.entity";
-import { CategoryRestrictionService } from "../category-restrictions/category-restriction.service";
-import { CategoryStateRestriction } from "../category-restrictions/category-restriction.entity";
-import { ShippingMethod } from "../shipping/shipping-method.entity";
+// import { ShippingIntegrationService } from "../shipping/shipping-integration.service";
+// import { ShippingRateService } from "../shipping/shipping-rate.service";
+// import { ShippingMethodService } from "../shipping/shipping-method.service";
+// import { ShippingRate } from "../shipping/shipping-rate.entity";
+// import { ShippingMethod } from "../shipping/shipping-method.entity";
 import {
   ORDER_STATUS,
   PAYMENT_METHOD,
@@ -53,7 +51,6 @@ export class CheckoutService {
   private userRepository: Repository<User>;
   private addressRepository: Repository<Address>;
   private dataSource: DataSource;
-  private categoryRestrictionService: CategoryRestrictionService;
 
   // Redis-based checkout sessions with 30-minute TTL
   private readonly CHECKOUT_SESSION_TTL = 1800; // 30 minutes
@@ -163,30 +160,6 @@ export class CheckoutService {
     this.userRepository = userRepository;
     this.addressRepository = addressRepository;
     this.dataSource = dataSource;
-    const categoryRestrictionRepository = this.dataSource.getRepository(
-      CategoryStateRestriction
-    );
-    this.categoryRestrictionService = new CategoryRestrictionService(
-      categoryRestrictionRepository
-    );
-  }
-
-  // Initialize shipping services
-  private getShippingIntegrationService(): ShippingIntegrationService {
-    const shippingRateRepository = this.dataSource.getRepository(ShippingRate);
-    const shippingMethodRepository =
-      this.dataSource.getRepository(ShippingMethod);
-
-    const shippingRateService = new ShippingRateService(shippingRateRepository);
-    const shippingMethodService = new ShippingMethodService(
-      shippingMethodRepository
-    );
-
-    return new ShippingIntegrationService(
-      this.dataSource,
-      shippingRateService,
-      shippingMethodService
-    );
   }
 
   async getCheckoutSessionWithAddresses(
@@ -225,119 +198,10 @@ export class CheckoutService {
         session.billingAddressId = null;
       }
 
-      // Validate category-based state restrictions
-      if (shippingAddress && shippingAddress.state) {
-        const categoryIds = session.items
-          .flatMap(
-            (item: any) =>
-              item.product?.categories?.map((cat: any) => cat.id) || []
-          )
-          .filter(Boolean);
-
-        if (categoryIds.length > 0) {
-          const restrictionResult =
-            await this.categoryRestrictionService.isProductRestrictedInState(
-              categoryIds,
-              shippingAddress.state
-            );
-
-          if (restrictionResult.isRestricted) {
-            // Get the restricted product names
-            const restrictedProducts = session.items.filter((item: any) => {
-              const itemCategoryIds =
-                item.product?.categories?.map((cat: any) => cat.id) || [];
-              return itemCategoryIds.some((catId: string) =>
-                restrictionResult.restrictedCategories.some(
-                  (rc: any) => rc.categoryId === catId
-                )
-              );
-            });
-
-            const productNames = restrictedProducts.map(
-              (item: any) => item.product?.name || "Unknown Product"
-            );
-            const uniqueProductNames = [...new Set(productNames)];
-
-            // Get custom messages from restricted categories
-            const customMessages = restrictionResult.restrictedCategories
-              .map((rc: any) => rc.customMessage || rc.reason)
-              .filter(Boolean);
-
-            const errorMessage = `The following products cannot be shipped to ${
-              shippingAddress.state
-            }: ${uniqueProductNames.join(", ")}. ${
-              customMessages.length > 0
-                ? customMessages[0]
-                : "Please remove these items to continue."
-            }`;
-
-            throw new Error(errorMessage);
-          }
-        }
-      }
-
       // Recalculate shipping and tax based on new address
       let shippingAmount = 0;
       let availableShippingMethods: ShippingMethodResponseDto[] = [];
 
-      try {
-        const shippingIntegrationService = this.getShippingIntegrationService();
-
-        // Convert items to shipping format
-        const shippingItems = session.items.map((item: any) => ({
-          id: item.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          price: item.unitPrice,
-          weight: item.product?.weight || 0.5,
-          categoryIds: item.product?.categoryIds || [],
-        }));
-
-        const shippingRequest = {
-          items: shippingItems,
-          shippingAddress: {
-            country: shippingAddress.country || "US",
-            state: shippingAddress.state || "",
-            city: shippingAddress.city || "",
-            postalCode: shippingAddress.postalCode || "",
-          },
-          orderValue: session.summary.subtotal,
-          isHoliday: false,
-        };
-
-        // Calculate shipping options
-        const shippingOptions =
-          await shippingIntegrationService.calculateShippingOptions(
-            shippingRequest
-          );
-
-        if (shippingOptions && shippingOptions.length > 0) {
-          // Use the cheapest shipping option as default
-          const defaultShipping = shippingOptions[0];
-          shippingAmount = defaultShipping.totalCost;
-
-          // Convert to shipping method format for compatibility
-          availableShippingMethods = shippingOptions.map((option) => ({
-            id: option.methodId,
-            name: option.methodName,
-            description: `${option.methodName} - ${
-              option.estimatedDays || 7
-            } days`,
-            price: option.totalCost,
-            estimatedDays: option.estimatedDays || 7,
-          }));
-        } else {
-          // No shipping methods available for this address/cart
-          availableShippingMethods = [];
-          console.warn(
-            "No shipping methods available for the provided address and cart items"
-          );
-        }
-      } catch (error) {
-        console.error("Error calculating shipping:", error);
-        // Shipping calculation failed - return empty array
-        availableShippingMethods = [];
-      }
       const taxAmount = 0;
       // const taxAmount = await this.calculateTaxAmount(
       //   shippingAddress,
@@ -422,173 +286,8 @@ export class CheckoutService {
       }
       console.log("Shipping Adderess => ", shippingAddress);
 
-      // Validate category-based state restrictions if shipping address is provided
-      if (shippingAddress && shippingAddress.state) {
-        const categoryIds = validatedItems
-          .flatMap(
-            (item: any) =>
-              item.product?.categories?.map((cat: any) => cat.id) || []
-          )
-          .filter(Boolean);
-
-        console.log("Category Ids => ", categoryIds);
-
-        if (categoryIds.length > 0) {
-          const restrictionResult =
-            await this.categoryRestrictionService.isProductRestrictedInState(
-              categoryIds,
-              shippingAddress.state
-            );
-
-          if (restrictionResult.isRestricted) {
-            // Get the restricted product names
-            const restrictedProducts = validatedItems.filter((item: any) => {
-              const itemCategoryIds =
-                item.product?.categories?.map((cat: any) => cat.id) || [];
-              return itemCategoryIds.some((catId: string) =>
-                restrictionResult.restrictedCategories.some(
-                  (rc: any) => rc.categoryId === catId
-                )
-              );
-            });
-
-            const productNames = restrictedProducts.map(
-              (item: any) => item.product?.name || "Unknown Product"
-            );
-            const uniqueProductNames = [...new Set(productNames)];
-
-            // Get custom messages from restricted categories
-            const customMessages = restrictionResult.restrictedCategories
-              .map((rc: any) => rc.customMessage || rc.reason)
-              .filter(Boolean);
-
-            const errorMessage = `The following products cannot be shipped to ${
-              shippingAddress.state
-            }: ${uniqueProductNames.join(", ")}. ${
-              customMessages.length > 0
-                ? customMessages[0]
-                : "Please remove these items to continue."
-            }`;
-
-            throw new Error(errorMessage);
-          }
-        }
-      }
-
-      // Calculate shipping costs if shipping address is provided
-      if (shippingAddress) {
-        try {
-          const shippingIntegrationService =
-            this.getShippingIntegrationService();
-
-          // Convert items to shipping format
-          const shippingItems = validatedItems.map((item: any) => ({
-            id: item.id,
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.unitPrice,
-            weight: item.product?.weight || 0.5,
-            categoryIds: item.product?.categoryIds || [],
-          }));
-
-          const shippingRequest = {
-            items: shippingItems,
-            shippingAddress: {
-              country: shippingAddress.country || "US",
-              state: shippingAddress.state || "",
-              city: shippingAddress.city || "",
-              postalCode: shippingAddress.postalCode || "",
-            },
-            orderValue: summary.subtotal,
-            isHoliday: false,
-          };
-
-          // If a specific shipping method is provided, calculate cost for that method only
-          if (data.shippingMethod) {
-            const selectedShippingCost =
-              await shippingIntegrationService.getShippingCostForMethod(
-                data.shippingMethod,
-                shippingRequest
-              );
-            if (selectedShippingCost) {
-              shippingAmount = selectedShippingCost.totalCost;
-
-              // Get all available shipping methods for the response
-              const shippingOptions =
-                await shippingIntegrationService.calculateShippingOptions(
-                  shippingRequest
-                );
-              availableShippingMethods = shippingOptions.map((option) => ({
-                id: option.methodId,
-                name: option.methodName,
-                description: `${option.methodName} - ${
-                  option.estimatedDays || 7
-                } days`,
-                price: option.totalCost,
-                estimatedDays: option.estimatedDays || 7,
-              }));
-
-              // Update summary with selected shipping cost
-              summary = await this.calculateSummary(
-                validatedItems,
-                0,
-                shippingAmount,
-                0
-              );
-            } else {
-              // Selected shipping method not available for this address/cart
-              availableShippingMethods = [];
-              console.warn(
-                `Shipping method ${data.shippingMethod} not available for the provided address and cart items`
-              );
-            }
-          } else {
-            // No specific method provided, calculate all available options
-            const shippingOptions =
-              await shippingIntegrationService.calculateShippingOptions(
-                shippingRequest
-              );
-
-            if (shippingOptions && shippingOptions.length > 0) {
-              // Use the first available method as default
-              const defaultShipping = shippingOptions[0];
-              shippingAmount = defaultShipping.totalCost;
-
-              // Convert to shipping method format for compatibility
-              availableShippingMethods = shippingOptions.map((option) => ({
-                id: option.methodId,
-                name: option.methodName,
-                description: `${option.methodName} - ${
-                  option.estimatedDays || 7
-                } days`,
-                price: option.totalCost,
-                estimatedDays: option.estimatedDays || 7,
-              }));
-
-              // Update summary with default shipping cost
-              summary = await this.calculateSummary(
-                validatedItems,
-                0,
-                shippingAmount,
-                0
-              );
-            } else {
-              // No shipping methods available for this address/cart
-              availableShippingMethods = [];
-              console.warn(
-                "No shipping methods available for the provided address and cart items"
-              );
-            }
-          }
-        } catch (error) {
-          console.error("Error calculating shipping:", error);
-          // Shipping calculation failed - return empty array
-          availableShippingMethods = [];
-        }
-      } else {
-        // No shipping address provided - return empty array
-        availableShippingMethods = [];
-      }
+      // No shipping address provided - return empty array
+      availableShippingMethods = [];
 
       // Store checkout session in Redis
       const sessionData = {
@@ -696,62 +395,7 @@ export class CheckoutService {
     items: any[],
     shippingAddress: any
   ): Promise<ShippingMethodResponseDto[]> {
-    try {
-      const shippingIntegrationService = this.getShippingIntegrationService();
-
-      // Convert items to shipping format
-      const shippingItems = items.map((item: any) => ({
-        id: item.id || `item-${Math.random()}`,
-        productId: item.productId,
-        quantity: item.quantity,
-        price: item.unitPrice || item.price,
-        weight: item.product?.weight || item.weight || 0.5,
-        categoryIds: item.product?.categoryIds || item.categoryIds || [],
-      }));
-
-      const orderValue = items.reduce((total, item) => {
-        const price = item.unitPrice || item.price || 0;
-        return total + price * item.quantity;
-      }, 0);
-
-      const shippingRequest = {
-        items: shippingItems,
-        shippingAddress: {
-          country: shippingAddress.country || "US",
-          state: shippingAddress.state || "",
-          city: shippingAddress.city || "",
-          postalCode: shippingAddress.postalCode || "",
-        },
-        orderValue,
-        isHoliday: false,
-      };
-
-      // Calculate shipping options
-      const shippingOptions =
-        await shippingIntegrationService.calculateShippingOptions(
-          shippingRequest
-        );
-
-      if (shippingOptions && shippingOptions.length > 0) {
-        // Convert to shipping method format for compatibility
-        return shippingOptions.map((option) => ({
-          id: option.methodId,
-          name: option.methodName,
-          description: `${option.methodName} - ${
-            option.estimatedDays || 7
-          } days`,
-          price: option.totalCost,
-          estimatedDays: option.estimatedDays || 7,
-        }));
-      } else {
-        // No shipping methods available
-        return [];
-      }
-    } catch (error: any) {
-      console.error("Shipping calculation error:", error);
-      // Return empty array instead of default methods
-      return [];
-    }
+    return [];
   }
 
   async calculateShipping(
@@ -763,52 +407,7 @@ export class CheckoutService {
       if (!session) {
         throw new Error("Checkout session not found or expired");
       }
-
-      const shippingIntegrationService = this.getShippingIntegrationService();
-
-      // Convert items to shipping format
-      const shippingItems = session.items.map((item: any) => ({
-        id: item.id,
-        productId: item.productId,
-        quantity: item.quantity,
-        price: item.unitPrice,
-        weight: item.product?.weight || 0.5,
-        categoryIds: item.product?.categoryIds || [],
-      }));
-
-      const shippingRequest = {
-        items: shippingItems,
-        shippingAddress: {
-          country: shippingAddress.country,
-          state: shippingAddress.state,
-          city: shippingAddress.city,
-          postalCode: shippingAddress.postalCode,
-        },
-        orderValue: session.summary.subtotal,
-        isHoliday: false,
-      };
-
-      // Calculate shipping options
-      const shippingOptions =
-        await shippingIntegrationService.calculateShippingOptions(
-          shippingRequest
-        );
-
-      if (shippingOptions && shippingOptions.length > 0) {
-        // Convert to shipping method format for compatibility
-        return shippingOptions.map((option) => ({
-          id: option.methodId,
-          name: option.methodName,
-          description: `${option.methodName} - ${
-            option.estimatedDays || 7
-          } days`,
-          price: option.totalCost,
-          estimatedDays: option.estimatedDays || 7,
-        }));
-      } else {
-        // No shipping methods available
-        return [];
-      }
+      return [];
     } catch (error: any) {
       console.error("Shipping calculation error:", error);
       // Return empty array instead of default methods
@@ -926,58 +525,7 @@ export class CheckoutService {
           );
         }
 
-        // Validate category-based state restrictions
-        if (shippingAddress && shippingAddress.state) {
-          const categoryIds = session.items
-            .flatMap(
-              (item: any) =>
-                item.product?.categories?.map((cat: any) => cat.id) || []
-            )
-            .filter(Boolean);
-
-          if (categoryIds.length > 0) {
-            const restrictionResult =
-              await this.categoryRestrictionService.isProductRestrictedInState(
-                categoryIds,
-                shippingAddress.state
-              );
-
-            if (restrictionResult.isRestricted) {
-              // Get the restricted product names
-              const restrictedProducts = session.items.filter((item: any) => {
-                const itemCategoryIds =
-                  item.product?.categories?.map((cat: any) => cat.id) || [];
-                return itemCategoryIds.some((catId: string) =>
-                  restrictionResult.restrictedCategories.some(
-                    (rc: any) => rc.categoryId === catId
-                  )
-                );
-              });
-
-              const productNames = restrictedProducts.map(
-                (item: any) => item.product?.name || "Unknown Product"
-              );
-              const uniqueProductNames = [...new Set(productNames)];
-
-              // Get custom messages from restricted categories
-              const customMessages = restrictionResult.restrictedCategories
-                .map((rc: any) => rc.customMessage || rc.reason)
-                .filter(Boolean);
-
-              const errorMessage = `Cannot complete order. The following products cannot be shipped to ${
-                shippingAddress.state
-              }: ${uniqueProductNames.join(", ")}. ${
-                customMessages.length > 0
-                  ? customMessages[0]
-                  : "Please remove these items to continue."
-              }`;
-
-              throw new Error(errorMessage);
-            }
-          }
-        }
-
-        // Get shipping method from session
+       // Get shipping method from session
         const shippingMethod = session.shippingMethod || {
           id: "standard",
           name: "Standard Shipping",

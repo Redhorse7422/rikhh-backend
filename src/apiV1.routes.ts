@@ -9,8 +9,6 @@ import homeRoutes from "./modules/home/home.routes";
 import checkoutRoutes from "./modules/checkout/checkout.routes";
 import addressRoutes from "./modules/address/address.routes";
 import sellerRoutes from "./modules/seller/seller.routes";
-import { shippingRoutes } from "./modules/shipping";
-import categoryRestrictionRoutes from "./modules/category-restrictions/category-restriction.routes";
 import couponRoutes from "./modules/coupon/coupon.routes";
 import orderRoutes from "./modules/order/order.routes";
 
@@ -26,8 +24,6 @@ Router.use("/home", homeRoutes);
 Router.use("/checkout", checkoutRoutes);
 Router.use("/addresses", addressRoutes);
 Router.use("/sellers", sellerRoutes);
-Router.use("/shipping", shippingRoutes);
-Router.use("/category-restrictions", categoryRestrictionRoutes);
 Router.use("/coupons", couponRoutes);
 Router.use("/orders", orderRoutes);
 
