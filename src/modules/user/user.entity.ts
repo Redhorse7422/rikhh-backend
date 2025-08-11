@@ -48,6 +48,9 @@ export class User extends BaseEntity {
   @Column({ default: false, nullable: true })
   isActive?: boolean;
 
+  @Column({ nullable: true, comment: "Firebase document ID for migration purposes" })
+  documentId?: string;
+
   @ManyToMany(() => Role, role => role.users)
   @JoinTable({
     name: "user_roles",

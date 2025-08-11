@@ -1,30 +1,30 @@
-import { Entity, Column, OneToMany, OneToOne, JoinColumn } from 'typeorm';
-import { BaseEntity } from '../../../common/entities/base.entity';
-import { User } from '../../user/user.entity';
-import { Product } from '../../products/entities/product.entity';
+import { Entity, Column, OneToMany, OneToOne, JoinColumn } from "typeorm";
+import { BaseEntity } from "../../../common/entities/base.entity";
+import { User } from "../../user/user.entity";
+import { Product } from "../../products/entities/product.entity";
 
 export enum SELLER_STATUS {
-  PENDING = 'pending',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  SUSPENDED = 'suspended',
-  INACTIVE = 'inactive'
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+  SUSPENDED = "suspended",
+  INACTIVE = "inactive",
 }
 
 export enum SELLER_VERIFICATION_STATUS {
-  UNVERIFIED = 'unverified',
-  PENDING = 'pending',
-  VERIFIED = 'verified',
-  REJECTED = 'rejected'
+  UNVERIFIED = "unverified",
+  PENDING = "pending",
+  VERIFIED = "verified",
+  REJECTED = "rejected",
 }
 
-@Entity('sellers')
+@Entity("sellers")
 export class Seller extends BaseEntity {
   @Column({ unique: true })
   userId: string;
 
   @OneToOne(() => User)
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: "userId" })
   user: User;
 
   @Column({ nullable: true })
@@ -67,16 +67,16 @@ export class Seller extends BaseEntity {
   licenseExpiryDate: Date;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: SELLER_STATUS,
-    default: SELLER_STATUS.PENDING
+    default: SELLER_STATUS.PENDING,
   })
   status: SELLER_STATUS;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: SELLER_VERIFICATION_STATUS,
-    default: SELLER_VERIFICATION_STATUS.UNVERIFIED
+    default: SELLER_VERIFICATION_STATUS.UNVERIFIED,
   })
   verificationStatus: SELLER_VERIFICATION_STATUS;
 
@@ -101,7 +101,7 @@ export class Seller extends BaseEntity {
   @Column({ default: 0 })
   totalRevenue: number;
 
-  @Column({ default: 0 })
+  @Column({ type: "decimal", precision: 3, scale: 1, default: 0 })
   rating: number;
 
   @Column({ default: 0 })
@@ -128,6 +128,15 @@ export class Seller extends BaseEntity {
   @Column({ nullable: true })
   notes: string;
 
-  @OneToMany(() => Product, product => product.seller)
+  @OneToMany(() => Product, (product) => product.seller)
   products: Product[];
-} 
+
+  @Column({ nullable: true })
+  fcmToken: string;
+
+  @Column({ nullable: true })
+  referralCode: string;
+
+  @Column({ nullable: true })
+  documentId: string;
+}

@@ -13,7 +13,12 @@
     "migration:revert": "yarn typeorm migration:revert -- -d src/config/database.ts",
     "seed": "ts-node src/scripts/seed.ts",
     "seed:list": "ts-node src/scripts/list-seeders.ts",
-    "redis": "ts-node src/scripts/redis-management.ts"
+    "redis": "ts-node src/scripts/redis-management.ts",
+    "migrate:sellers": "ts-node src/scripts/migrate-sellers.ts",
+    "migrate:all": "ts-node src/scripts/firebase-migration.ts",
+    "migrate:firebase": "ts-node src/scripts/firebase-migration.ts",
+    "test:migration": "ts-node src/scripts/test-migration-setup.ts",
+    "test:seller": "ts-node src/scripts/test-seller-migration.ts"
   },
   "keywords": [
     "node",
@@ -51,6 +56,7 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "express-session": "^1.18.1",
+    "firebase-admin": "^12.0.0",
     "handlebars": "^4.7.8",
     "ioredis": "^5.6.1",
     "jsonwebtoken": "^9.0.2",

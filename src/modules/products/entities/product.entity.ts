@@ -1,11 +1,19 @@
-import { Entity, Column, ManyToOne, OneToMany, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
-import { BaseEntity } from '../../../common/entities/base.entity';
-import { Category } from '../../category/category.entity';
-import { MediaFile } from '../../media/media-file.entity';
-import { Attribute } from '../../attributes/entities/attribute.entity';
-import { Seller } from '../../seller/entities/seller.entity';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  ManyToMany,
+  JoinTable,
+} from "typeorm";
+import { BaseEntity } from "../../../common/entities/base.entity";
+import { Category } from "../../category/category.entity";
+import { MediaFile } from "../../media/media-file.entity";
+import { Attribute } from "../../attributes/entities/attribute.entity";
+import { Seller } from "../../seller/entities/seller.entity";
 
-@Entity('products')
+@Entity("products")
 export class Product extends BaseEntity {
   @Column({ nullable: true })
   addedBy: string;
@@ -17,7 +25,7 @@ export class Product extends BaseEntity {
   sellerId: string;
 
   @ManyToOne(() => Seller, { nullable: true })
-  @JoinColumn({ name: 'sellerId' })
+  @JoinColumn({ name: "sellerId" })
   seller: Seller;
 
   @Column()
@@ -34,14 +42,14 @@ export class Product extends BaseEntity {
   thumbnailImgId: string;
 
   @ManyToOne(() => MediaFile, { nullable: true })
-  @JoinColumn({ name: 'thumbnailImgId' })
+  @JoinColumn({ name: "thumbnailImgId" })
   thumbnailImg?: MediaFile;
 
   @ManyToMany(() => Category, { eager: true })
   @JoinTable()
   categories: Category[];
 
-  @Column('simple-array', { nullable: true })
+  @Column("simple-array", { nullable: true })
   tags: string[];
 
   @Column({ nullable: true })
@@ -50,10 +58,10 @@ export class Product extends BaseEntity {
   @Column({ nullable: true })
   longDescription: string;
 
-  @Column('decimal', { nullable: true })
+  @Column("decimal", { nullable: true })
   regularPrice: number;
 
-  @Column('decimal', { nullable: true })
+  @Column("decimal", { nullable: true })
   salePrice: number;
 
   @Column({ default: false })
@@ -65,7 +73,7 @@ export class Product extends BaseEntity {
   @Column({ default: false })
   approved: boolean;
 
-  @Column('int', { nullable: true })
+  @Column("int", { nullable: true })
   stock: number;
 
   @Column({ default: false })
@@ -74,7 +82,7 @@ export class Product extends BaseEntity {
   @Column({ default: false })
   featured: boolean;
 
-  @Column('decimal', { nullable: true })
+  @Column("decimal", { nullable: true })
   discount: number;
 
   @Column({ nullable: true })
@@ -86,7 +94,7 @@ export class Product extends BaseEntity {
   @Column({ nullable: true })
   discountEndDate: Date;
 
-  @Column('decimal', { nullable: true })
+  @Column("decimal", { nullable: true })
   tax: number;
 
   @Column({ nullable: true })
@@ -95,13 +103,13 @@ export class Product extends BaseEntity {
   @Column({ nullable: true })
   shippingType: string;
 
-  @Column('decimal', { nullable: true })
+  @Column("decimal", { nullable: true })
   shippingCost: number;
 
-  @Column('int', { nullable: true })
+  @Column("int", { nullable: true })
   estShippingDays: number;
 
-  @Column('int', { nullable: true })
+  @Column("int", { nullable: true })
   numOfSales: number;
 
   @Column({ nullable: true })
@@ -110,7 +118,7 @@ export class Product extends BaseEntity {
   @Column({ nullable: true })
   metaDescription: string;
 
-  @Column('decimal', { nullable: true })
+  @Column("decimal", { nullable: true })
   rating: number;
 
   @Column({ nullable: true })
@@ -119,6 +127,12 @@ export class Product extends BaseEntity {
   @Column({ nullable: true })
   externalLinkBtn: string;
 
-  @OneToMany(() => Attribute, attribute => attribute.product)
+  @OneToMany(() => Attribute, (attribute) => attribute.product)
   attributes?: Attribute[];
-} 
+
+  @Column({ nullable: true })
+  lat: string;
+
+  @Column({ nullable: true })
+  lng: string;
+}
