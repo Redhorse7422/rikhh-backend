@@ -296,7 +296,20 @@ class FirebaseMigrationService {
 
   async migrateCategories(): Promise<void> {
     this.log("🔄 Starting categories migration...", "info");
-    // TODO: Implement categories migration
+    
+    try {
+      // Import and use the CategoryMigrationService
+      const { CategoryMigrationService } = await import('./migrate-categories');
+      const categoryMigrationService = new CategoryMigrationService();
+      
+      // Run category migration
+      await categoryMigrationService.migrateCategories();
+      
+      this.log("✅ Categories migration completed successfully", "info");
+    } catch (error: any) {
+      this.log(`❌ Categories migration failed: ${error.message}`, "error");
+      throw error;
+    }
   }
 
   async migrateMediaFiles(): Promise<void> {
@@ -306,7 +319,20 @@ class FirebaseMigrationService {
 
   async migrateProducts(): Promise<void> {
     this.log("🔄 Starting products migration...", "info");
-    // TODO: Implement products migration
+    
+    try {
+      // Import and use the ProductMigrationService
+      const { ProductMigrationService } = await import('./migrate-products');
+      const productMigrationService = new ProductMigrationService(false); // false = not test mode
+      
+      // Run product migration
+      await productMigrationService.migrateProducts();
+      
+      this.log("✅ Products migration completed successfully", "info");
+    } catch (error: any) {
+      this.log(`❌ Products migration failed: ${error.message}`, "error");
+      throw error;
+    }
   }
 
   async migrateAttributes(): Promise<void> {
