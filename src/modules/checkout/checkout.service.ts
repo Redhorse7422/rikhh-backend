@@ -25,10 +25,10 @@ import {
 } from "./dto/checkout-response.dto";
 import { v4 as uuidv4 } from "uuid";
 import { cacheService } from "../../common/services/cache.service";
-import { paymentService } from "../../common/services/payment.service";
 import { shippingService } from "../../common/services/shipping.service";
 import { taxService } from "../../common/services/tax.service";
 import { emailService } from "../../common/services/email.service";
+import { referralService } from "../referral/referral.service";
 // import { ShippingIntegrationService } from "../shipping/shipping-integration.service";
 // import { ShippingRateService } from "../shipping/shipping-rate.service";
 // import { ShippingMethodService } from "../shipping/shipping-method.service";
@@ -301,7 +301,6 @@ export class CheckoutService {
         shippingAddress: shippingAddress, // Store full address object
         billingAddress: billingAddress, // Store full address object
         shippingMethod: data.shippingMethod,
-        paymentMethod: data.paymentMethod,
         shippingAmount,
         availableShippingMethods,
         createdAt: new Date(),
@@ -316,11 +315,9 @@ export class CheckoutService {
         items: validatedItems,
         shippingAddress,
         billingAddress,
-        availablePaymentMethods: [
-          PAYMENT_METHOD.CREDIT_CARD,
-          PAYMENT_METHOD.PAYPAL,
-          PAYMENT_METHOD.CASH_ON_DELIVERY,
-        ],
+        // availablePaymentMethods: [
+        //   PAYMENT_METHOD.CASH_ON_DELIVERY,
+        // ],
         availableShippingMethods,
       };
     } catch (error: any) {
@@ -525,7 +522,7 @@ export class CheckoutService {
           );
         }
 
-       // Get shipping method from session
+        // Get shipping method from session
         const shippingMethod = session.shippingMethod || {
           id: "standard",
           name: "Standard Shipping",
@@ -533,96 +530,34 @@ export class CheckoutService {
           estimatedDays: 7,
         };
 
-        const paymentRequest = {
-          amount: session.summary.totalAmount,
-          currency: "USD",
-          paymentMethod: data.paymentMethod || PAYMENT_METHOD.CREDIT_CARD,
-          paymentData: {
-            cardNumber: data.paymentData?.cardNumber,
-            expiryMonth: data.paymentData?.expiryMonth,
-            expiryYear: data.paymentData?.expiryYear,
-            cvv: data.paymentData?.cvv,
-            cardholderName: data.paymentData?.cardholderName,
-            billingAddress: billingAddress,
-          },
-          orderId: orderNumber,
-          orderNumber,
-          customerEmail: billingAddress.email,
-          customerName: `${billingAddress.firstName} ${billingAddress.lastName}`,
-          description: `Order ${orderNumber}`,
+        // Update billing address with customer info
+        billingAddress = {
+          ...billingAddress,
+          ...data.customerInfo,
         };
 
-        // console.log(
-        //   "🔍 Payment Debug - Payment Request Amount:",
-        //   paymentRequest.amount
-        // );
-
-        // Process payment first
-        // const paymentRequest = {
-        //   amount: session.summary.totalAmount,
-        //   currency: "USD",
-        //   paymentMethod: data.paymentMethod,
-        //   paymentData: {
-        //     cardNumber: data.paymentData?.cardNumber,
-        //     expiryMonth: data.paymentData?.expiryMonth,
-        //     expiryYear: data.paymentData?.expiryYear,
-        //     cvv: data.paymentData?.cvv,
-        //     cardholderName: data.paymentData?.cardholderName,
-        //     billingAddress: billingAddress,
-        //     paymentMethodId: data.paymentData?.paymentMethodId,
-        //   },
-        //   orderId: orderNumber,
-        //   orderNumber,
-        //   customerEmail: data.customerInfo.email,
-        //   customerName: `${data.customerInfo.firstName} ${data.customerInfo.lastName}`,
-        //   description: `Order ${orderNumber}`,
-        // };
-
-        const paymentResponse = await paymentService.processPayment(
-          paymentRequest
-        );
-
-        // const paymentResponse = {
-        //   success: true,
-        //   paymentStatus: PAYMENT_STATUS.CAPTURED,
-        //   transactionId: "test-transaction-id",
-        //   gatewayResponse: { message: "Mock payment success" },
-        // };
-
-        if (
-          !paymentResponse.success &&
-          paymentResponse.paymentStatus !== PAYMENT_STATUS.PENDING
-        ) {
-          throw new Error(paymentResponse.error || "Payment processing failed");
-        }
-
         // Create order
-        const order = manager.create(Order, {
-          orderNumber,
-          userId: data.userId,
-          guestId: data.guestId || uuidv4(),
-          status: ORDER_STATUS.PENDING,
-          subtotal: session.summary.subtotal,
-          taxAmount: session.summary.taxAmount,
-          shippingAmount: session.summary.shippingAmount,
-          discountAmount: session.summary.discountAmount,
-          totalAmount: session.summary.totalAmount,
-          paymentStatus: paymentResponse.paymentStatus,
-          paymentMethod: data.paymentMethod,
-          paymentTransactionId: paymentResponse.transactionId,
-          paymentGatewayResponse: JSON.stringify(
-            paymentResponse.gatewayResponse
-          ),
-          shippingAddress: shippingAddress,
-          billingAddress: billingAddress,
-          shippingMethod: shippingMethod.name,
-          customerEmail: billingAddress.email,
-          customerFirstName: billingAddress.firstName,
-          customerLastName: billingAddress.lastName,
-          customerPhone: billingAddress.phone,
-          notes: data.notes,
-          couponCode: data.couponCode,
-        });
+        const order = new Order();
+        order.orderNumber = orderNumber;
+        order.userId = data.userId || '';
+        order.guestId = data.guestId || uuidv4();
+        order.status = ORDER_STATUS.PENDING;
+        order.subtotal = session.summary.subtotal;
+        order.taxAmount = session.summary.taxAmount;
+        order.shippingAmount = session.summary.shippingAmount;
+        order.discountAmount = session.summary.discountAmount;
+        order.totalAmount = session.summary.totalAmount;
+        order.paymentStatus = PAYMENT_STATUS.PENDING;
+        order.paymentMethod = PAYMENT_METHOD.CASH_ON_DELIVERY;
+        order.shippingAddress = shippingAddress;
+        order.billingAddress = billingAddress;
+        order.shippingMethod = shippingMethod.name;
+        order.customerEmail = billingAddress.email;
+        order.customerFirstName = billingAddress.firstName;
+        order.customerLastName = billingAddress.lastName;
+        order.customerPhone = billingAddress.phone || undefined;
+        order.notes = data.notes || '';
+        order.couponCode = data.couponCode || '';
 
         const savedOrder = await manager.save(Order, order);
 
@@ -678,51 +613,57 @@ export class CheckoutService {
         // Clean up checkout session
         await this.deleteCheckoutSession(data.checkoutId);
 
-        // Create shipment if not cash on delivery
+        // Process referral commission if applicable
+        try {
+          await referralService.processOrderCommission(savedOrder.id);
+        } catch (error) {
+          console.error("Failed to process referral commission:", error);
+          // Don't fail the order process if referral processing fails
+        }
+
+        // Create shipment for all orders (including cash on delivery)
         let trackingNumber: string | undefined;
-        if (data.paymentMethod !== PAYMENT_METHOD.CASH_ON_DELIVERY) {
-          const shippingItems = session.items.map((item: any) => ({
-            weight: 1, // Default weight
-            length: 10,
-            width: 10,
-            height: 10,
-            quantity: item.quantity,
-            description: "Product",
-          }));
+        const shippingItems = session.items.map((item: any) => ({
+          weight: 1, // Default weight
+          length: 10,
+          width: 10,
+          height: 10,
+          quantity: item.quantity,
+          description: "Product",
+        }));
 
-          const shipmentResult = await shippingService.createShipment(
-            {
-              id: shippingMethod.id,
-              name: shippingMethod.name,
-              description: shippingMethod.name,
-              price: shippingMethod.price,
-              estimatedDays: shippingMethod.estimatedDays,
-              carrier: "USPS",
-              serviceCode: shippingMethod.id,
-              trackingAvailable: true,
+        const shipmentResult = await shippingService.createShipment(
+          {
+            id: shippingMethod.id,
+            name: shippingMethod.name,
+            description: shippingMethod.name,
+            price: shippingMethod.price,
+            estimatedDays: shippingMethod.estimatedDays,
+            carrier: "USPS",
+            serviceCode: shippingMethod.id,
+            trackingAvailable: true,
+          },
+          {
+            fromAddress: {
+              firstName: "Rikhh",
+              lastName: "Store",
+              addressLine1: "123 Business Street",
+              city: "Business City",
+              state: "CA",
+              postalCode: "90210",
+              country: "US",
             },
-            {
-              fromAddress: {
-                firstName: "Rikhh",
-                lastName: "Store",
-                addressLine1: "123 Business Street",
-                city: "Business City",
-                state: "CA",
-                postalCode: "90210",
-                country: "US",
-              },
-              toAddress: shippingAddress,
-              items: shippingItems,
-              weight: shippingService.calculateWeight(shippingItems),
-            },
-            orderNumber
-          );
+            toAddress: shippingAddress,
+            items: shippingItems,
+            weight: shippingService.calculateWeight(shippingItems),
+          },
+          orderNumber
+        );
 
-          if (shipmentResult.success && shipmentResult.trackingNumber) {
-            trackingNumber = shipmentResult.trackingNumber;
-            savedOrder.trackingNumber = trackingNumber;
-            await manager.save(Order, savedOrder);
-          }
+        if (shipmentResult.success && shipmentResult.trackingNumber) {
+          trackingNumber = shipmentResult.trackingNumber;
+          savedOrder.trackingNumber = trackingNumber;
+          await manager.save(Order, savedOrder);
         }
 
         // Send confirmation email
@@ -771,7 +712,7 @@ export class CheckoutService {
           },
           paymentReceipt: {
             transactionId: savedOrder.paymentTransactionId || "",
-            paymentMethod: savedOrder.paymentMethod,
+            // paymentMethod: savedOrder.paymentMethod as any,
             amount: savedOrder.totalAmount,
             currency: "USD",
             status: savedOrder.paymentStatus,

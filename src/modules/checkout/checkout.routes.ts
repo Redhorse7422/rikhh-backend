@@ -20,7 +20,6 @@ import {
   authenticate,
   optionalAuth,
 } from "../auth/middlewares/auth.middleware";
-import { paymentService } from "../../common/services/payment.service";
 import { ORDER_STATUS, PAYMENT_STATUS } from "./entities/order.enums";
 
 const router = Router();
@@ -50,7 +49,25 @@ const ctrl = checkoutController(
   addressRepository
 );
 
-// Checkout process endpoints - Allow both authenticated and guest users
+/**
+ * @swagger
+ * /api/v1/checkout/initiate:
+ *   post:
+ *     summary: Initiate checkout process
+ *     description: Start the checkout process for both authenticated and guest users
+ *     tags: [Checkout]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CheckoutInitiateDto'
+ *     responses:
+ *       201:
+ *         description: Checkout initiated successfully
+ *       400:
+ *         description: Validation error or invalid data
+ */
 router.post(
   "/initiate",
   optionalAuth,
@@ -58,16 +75,70 @@ router.post(
   ctrl.initiateCheckout
 );
 
+/**
+ * @swagger
+ * /api/v1/checkout/calculate-shipping:
+ *   post:
+ *     summary: Calculate shipping costs
+ *     description: Calculate shipping costs for the current checkout session
+ *     tags: [Checkout]
+ *     responses:
+ *       200:
+ *         description: Shipping costs calculated successfully
+ *       400:
+ *         description: Invalid checkout data
+ */
 router.post("/calculate-shipping", optionalAuth, ctrl.calculateShipping);
 
-router.post(
-  "/calculate-shipping-preview",
-  optionalAuth,
-  ctrl.calculateShippingWithoutSession
-);
+/**
+ * @swagger
+ * /api/v1/checkout/calculate-shipping-preview:
+ *   post:
+ *     summary: Calculate shipping costs (preview)
+ *     description: Calculate shipping costs without requiring a checkout session
+ *     tags: [Checkout]
+ *     responses:
+ *       200:
+ *         description: Shipping costs calculated successfully
+ *       400:
+ *         description: Invalid shipping data
+ */
+router.post("/calculate-shipping-preview", optionalAuth, ctrl.calculateShippingWithoutSession);
 
+/**
+ * @swagger
+ * /api/v1/checkout/calculate-tax:
+ *   post:
+ *     summary: Calculate tax
+ *     description: Calculate tax for the current checkout
+ *     tags: [Checkout]
+ *     responses:
+ *       200:
+ *         description: Tax calculated successfully
+ *       400:
+ *         description: Invalid checkout data
+ */
 router.post("/calculate-tax", optionalAuth, ctrl.calculateTax);
 
+/**
+ * @swagger
+ * /api/v1/checkout/apply-coupon:
+ *   post:
+ *     summary: Apply coupon to checkout
+ *     description: Apply a coupon code to the current checkout session
+ *     tags: [Checkout]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ApplyCouponDto'
+ *     responses:
+ *       200:
+ *         description: Coupon applied successfully
+ *       400:
+ *         description: Invalid coupon or validation error
+ */
 router.post(
   "/apply-coupon",
   optionalAuth,
@@ -75,6 +146,27 @@ router.post(
   ctrl.applyCoupon
 );
 
+/**
+ * @swagger
+ * /api/v1/checkout/confirm-order:
+ *   post:
+ *     summary: Confirm and place order
+ *     description: Confirm the checkout and create the final order
+ *     tags: [Checkout]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ConfirmOrderDto'
+ *     responses:
+ *       201:
+ *         description: Order placed successfully
+ *       400:
+ *         description: Validation error or invalid data
+ *       500:
+ *         description: Order creation failed
+ */
 router.post(
   "/confirm-order",
   optionalAuth,
@@ -82,10 +174,47 @@ router.post(
   ctrl.confirmOrder
 );
 
-// Get checkout session data with addresses populated
+/**
+ * @swagger
+ * /api/v1/checkout/session/{checkoutId}:
+ *   get:
+ *     summary: Get checkout session
+ *     description: Retrieve checkout session data with addresses populated
+ *     tags: [Checkout]
+ *     parameters:
+ *       - in: path
+ *         name: checkoutId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Checkout session identifier
+ *     responses:
+ *       200:
+ *         description: Checkout session retrieved successfully
+ *       404:
+ *         description: Checkout session not found
+ */
 router.get("/session/:checkoutId", optionalAuth, ctrl.getCheckoutSession);
 
-// Update checkout address for guests
+/**
+ * @swagger
+ * /api/v1/checkout/address:
+ *   put:
+ *     summary: Update checkout address
+ *     description: Update shipping address for guest users
+ *     tags: [Checkout]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateCheckoutAddressDto'
+ *     responses:
+ *       200:
+ *         description: Address updated successfully
+ *       400:
+ *         description: Validation error or invalid data
+ */
 router.put(
   "/address",
   optionalAuth,
@@ -93,103 +222,86 @@ router.put(
   ctrl.updateCheckoutAddress
 );
 
-// Order management endpoints - Allow both authenticated and guest users
+/**
+ * @swagger
+ * /api/v1/checkout/orders:
+ *   get:
+ *     summary: Get user orders
+ *     description: Retrieve orders for both authenticated and guest users
+ *     tags: [Checkout]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Orders retrieved successfully
+ */
 router.get("/orders", optionalAuth, ctrl.getOrders);
 
+/**
+ * @swagger
+ * /api/v1/checkout/orders/{id}:
+ *   get:
+ *     summary: Get order by ID
+ *     description: Retrieve a specific order by its ID
+ *     tags: [Checkout]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Order unique identifier
+ *     responses:
+ *       200:
+ *         description: Order retrieved successfully
+ *       404:
+ *         description: Order not found
+ */
 router.get("/orders/:id", optionalAuth, ctrl.getOrderById);
 
-// Address management endpoints for checkout - Require authentication
+/**
+ * @swagger
+ * /api/v1/checkout/addresses:
+ *   get:
+ *     summary: Get user addresses
+ *     description: Retrieve saved addresses for authenticated users
+ *     tags: [Checkout]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Addresses retrieved successfully
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ */
 router.get("/addresses", authenticate, ctrl.getUserAddresses);
 
+/**
+ * @swagger
+ * /api/v1/checkout/addresses/default:
+ *   get:
+ *     summary: Get default addresses
+ *     description: Retrieve default shipping and billing addresses
+ *     tags: [Checkout]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Default addresses retrieved successfully
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ */
 router.get("/addresses/default", authenticate, ctrl.getDefaultAddresses);
-
-// Payment webhook endpoints
-router.post("/webhooks/authorize-net", async (req: any, res: any) => {
-  try {
-    const signature = req.headers["x-signature"] as string;
-    const isValid = await paymentService.verifyWebhook(
-      req.body,
-      signature,
-      "authorizeNet"
-    );
-
-    if (!isValid) {
-      return res.status(400).json({ error: "Invalid signature" });
-    }
-
-    // Process Authorize.net webhook
-    const { eventType, payload } = req.body;
-
-    if (eventType === "net.authorize.payment.authcapture.created") {
-      const order = await orderRepository.findOne({
-        where: { paymentTransactionId: payload.id },
-      });
-
-      if (order) {
-        order.paymentStatus = PAYMENT_STATUS.CAPTURED;
-        order.status = ORDER_STATUS.CONFIRMED;
-        await orderRepository.save(order);
-
-        // Create status history
-        const statusHistory = orderStatusHistoryRepository.create({
-          orderId: order.id,
-          status: ORDER_STATUS.CONFIRMED,
-          notes: "Payment captured via Authorize.net",
-          notificationSent: false,
-        });
-        await orderStatusHistoryRepository.save(statusHistory);
-      }
-    }
-
-    res.status(200).json({ received: true });
-  } catch (error) {
-    console.error("Authorize.net webhook error:", error);
-    res.status(500).json({ error: "Webhook processing failed" });
-  }
-});
-
-router.post("/webhooks/stripe", async (req: any, res: any) => {
-  try {
-    const signature = req.headers["stripe-signature"] as string;
-    const isValid = await paymentService.verifyWebhook(
-      req.body,
-      signature,
-      "stripe"
-    );
-
-    if (!isValid) {
-      return res.status(400).json({ error: "Invalid signature" });
-    }
-
-    // Process Stripe webhook
-    const { type, data } = req.body;
-
-    if (type === "payment_intent.succeeded") {
-      const order = await orderRepository.findOne({
-        where: { paymentTransactionId: data.object.id },
-      });
-
-      if (order) {
-        order.paymentStatus = PAYMENT_STATUS.CAPTURED;
-        order.status = ORDER_STATUS.CONFIRMED;
-        await orderRepository.save(order);
-
-        // Create status history
-        const statusHistory = orderStatusHistoryRepository.create({
-          orderId: order.id,
-          status: ORDER_STATUS.CONFIRMED,
-          notes: "Payment captured via Stripe",
-          notificationSent: false,
-        });
-        await orderStatusHistoryRepository.save(statusHistory);
-      }
-    }
-
-    res.status(200).json({ received: true });
-  } catch (error) {
-    console.error("Stripe webhook error:", error);
-    res.status(500).json({ error: "Webhook processing failed" });
-  }
-});
 
 export default router;

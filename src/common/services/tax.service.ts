@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { paymentConfig } from '../../config/payment.config';
 
 export interface TaxAddress {
   country: string;
@@ -54,8 +53,8 @@ export class TaxService {
   private readonly taxjarApiKey: string;
 
   constructor() {
-    this.taxjarApiUrl = paymentConfig.tax.taxjar.apiUrl;
-    this.taxjarApiKey = paymentConfig.tax.taxjar.apiKey;
+    this.taxjarApiUrl = process.env.TAXJAR_API_URL || 'https://api.taxjar.com';
+    this.taxjarApiKey = process.env.TAXJAR_API_KEY || '';
   }
 
   async calculateTax(request: TaxRequest): Promise<TaxCalculation> {

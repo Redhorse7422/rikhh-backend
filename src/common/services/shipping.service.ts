@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { paymentConfig } from '../../config/payment.config';
+import { ShippingMethodResponseDto } from '../../modules/checkout/dto/checkout-response.dto';
 
 export interface ShippingAddress {
   firstName: string;
@@ -73,11 +73,21 @@ export interface TrackingEvent {
 
 export class ShippingService {
   private readonly uspsApiUrl: string;
+  private readonly uspsUserId: string;
   private readonly fedexApiUrl: string;
+  private readonly fedexKey: string;
+  private readonly fedexPassword: string;
+  private readonly fedexAccountNumber: string;
+  private readonly fedexMeterNumber: string;
 
   constructor() {
-    this.uspsApiUrl = paymentConfig.shipping.usps.apiUrl;
-    this.fedexApiUrl = paymentConfig.shipping.fedex.apiUrl;
+    this.uspsApiUrl = process.env.USPS_API_URL || 'http://production.shippingapis.com/ShippingAPI.dll';
+    this.uspsUserId = process.env.USPS_USER_ID || '';
+    this.fedexApiUrl = process.env.FEDEX_API_URL || 'https://apis-sandbox.fedex.com';
+    this.fedexKey = process.env.FEDEX_KEY || '';
+    this.fedexPassword = process.env.FEDEX_PASSWORD || '';
+    this.fedexAccountNumber = process.env.FEDEX_ACCOUNT_NUMBER || '';
+    this.fedexMeterNumber = process.env.FEDEX_METER_NUMBER || '';
   }
 
   async getShippingRates(request: ShippingRequest): Promise<ShippingResponse> {
@@ -116,7 +126,7 @@ export class ShippingService {
   private async getUSPSRates(request: ShippingRequest): Promise<ShippingResponse> {
     try {
       const xml = `
-        <RateV4Request USERID="${paymentConfig.shipping.usps.userId}">
+        <RateV4Request USERID="${this.uspsUserId}">
           <Revision>2</Revision>
           <Package ID="1">
             <Service>ALL</Service>
@@ -328,7 +338,7 @@ export class ShippingService {
   private async trackUSPSShipment(trackingNumber: string): Promise<TrackingResponse> {
     try {
       const xml = `
-        <TrackFieldRequest USERID="${paymentConfig.shipping.usps.userId}">
+        <TrackFieldRequest USERID="${this.uspsUserId}">
           <TrackID ID="${trackingNumber}"></TrackID>
         </TrackFieldRequest>
       `;

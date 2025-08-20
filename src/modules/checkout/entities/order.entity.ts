@@ -70,7 +70,7 @@ export class Order extends BaseEntity {
     type: "enum",
     enum: PAYMENT_METHOD,
     enumName: "payment_method_enum",
-    nullable: true,
+    default: PAYMENT_METHOD.CASH_ON_DELIVERY,
   })
   paymentMethod: PAYMENT_METHOD;
 

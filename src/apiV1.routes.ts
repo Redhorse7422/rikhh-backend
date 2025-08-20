@@ -11,6 +11,7 @@ import addressRoutes from "./modules/address/address.routes";
 import sellerRoutes from "./modules/seller/seller.routes";
 import couponRoutes from "./modules/coupon/coupon.routes";
 import orderRoutes from "./modules/order/order.routes";
+import referralRoutes from "./modules/referral/referral.routes";
 
 const Router = r();
 
@@ -26,5 +27,6 @@ Router.use("/addresses", addressRoutes);
 Router.use("/sellers", sellerRoutes);
 Router.use("/coupons", couponRoutes);
 Router.use("/orders", orderRoutes);
+Router.use("/referrals", referralRoutes);
 
 export { Router };

@@ -38,7 +38,7 @@ export class OrderResponseDto {
   shippingAmount: number;
   discountAmount: number;
   totalAmount: number;
-  paymentStatus: PAYMENT_STATUS;
+  paymentStatus?: PAYMENT_STATUS;
   paymentMethod?: PAYMENT_METHOD;
   paymentTransactionId?: string;
   shippingAddress: any;

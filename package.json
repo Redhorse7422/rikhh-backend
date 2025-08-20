@@ -18,7 +18,8 @@
     "migrate:all": "ts-node src/scripts/firebase-migration.ts",
     "migrate:firebase": "ts-node src/scripts/firebase-migration.ts",
     "test:migration": "ts-node src/scripts/test-migration-setup.ts",
-    "test:seller": "ts-node src/scripts/test-seller-migration.ts"
+    "test:seller": "ts-node src/scripts/test-seller-migration.ts",
+    "docs:postman": "node scripts/generate-postman.js"
   },
   "keywords": [
     "node",
@@ -69,6 +70,8 @@
     "reflect-metadata": "^0.2.2",
     "slug": "^11.0.0",
     "stripe": "^18.3.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "ts-node-dev": "^2.0.0",
     "typeorm": "^0.3.25",
     "typescript": "^5.8.3"
@@ -77,6 +80,8 @@
     "@types/authorizenet": "^1.0.2",
     "@types/slug": "^5.0.9",
     "@types/strip-bom": "^4.0.1",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "strip-bom": "^5.0.0",
     "strip-bom-cli": "^2.0.0",
     "ts-node": "^10.9.2",

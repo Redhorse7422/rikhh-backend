@@ -46,7 +46,6 @@ export class CheckoutInitiateResponseDto {
   items: CheckoutItemResponseDto[];
   shippingAddress?: any;
   billingAddress?: any;
-  availablePaymentMethods: PAYMENT_METHOD[];
   availableShippingMethods: ShippingMethodResponseDto[];
 }
 
@@ -94,7 +93,6 @@ export class OrderItemResponseDto {
 
 export class PaymentReceiptDto {
   transactionId: string;
-  paymentMethod: PAYMENT_METHOD;
   last4?: string;
   amount: number;
   currency: string;

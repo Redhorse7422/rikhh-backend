@@ -8,7 +8,6 @@ import {
   ValidateNested,
 } from "class-validator";
 import { Transform, Type } from "class-transformer";
-import { PAYMENT_METHOD } from "../entities/order.enums";
 
 export class CustomerInfoDto {
   @IsEmail()
@@ -23,32 +22,6 @@ export class CustomerInfoDto {
   @IsOptional()
   @IsString()
   phone?: string;
-}
-
-export class PaymentDataDto {
-  @IsOptional()
-  @IsString()
-  cardNumber?: string;
-
-  @IsOptional()
-  @IsString()
-  expiryMonth?: string;
-
-  @IsOptional()
-  @IsString()
-  expiryYear?: string;
-
-  @IsOptional()
-  @IsString()
-  cvv?: string;
-
-  @IsOptional()
-  @IsString()
-  cardholderName?: string;
-
-  @IsOptional()
-  @IsString()
-  paymentMethodId?: string;
 }
 
 export class ConfirmOrderDto {
@@ -67,43 +40,11 @@ export class ConfirmOrderDto {
   @Type(() => CustomerInfoDto)
   customerInfo: CustomerInfoDto;
 
-  @IsEnum(PAYMENT_METHOD)
-  paymentMethod: PAYMENT_METHOD;
-
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => PaymentDataDto)
-  paymentData?: PaymentDataDto;
-
-  @IsOptional()
-  @IsString()
-  paymentTransactionId?: string;
-
-  @IsOptional()
-  @IsString()
-  couponCode?: string;
-
   @IsOptional()
   @IsString()
   notes?: string;
 
   @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }: { value: any }) => {
-    if (typeof value === "string") {
-      return value === "true" || value === "1";
-    }
-    return value;
-  })
-  createAccount?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }: { value: any }) => {
-    if (typeof value === "string") {
-      return value === "true" || value === "1";
-    }
-    return value;
-  })
-  emailNotifications?: boolean;
+  @IsString()
+  couponCode?: string;
 }

@@ -8,6 +8,7 @@ import { Router as V1Router } from "./apiV1.routes";
 import authRoutes from "./modules/auth/routes/auth.routes";
 import guestMigrationRoutes from "./modules/guest-migration/guest-migration.routes";
 import { requestLogger } from "./common/middlewares/request-logger.middleware";
+import { mountSwagger } from "./docs/sawgger";
 
 
 dotenv.config();
@@ -33,7 +34,7 @@ app.get("/health", (req, res) => {
 app.get("/", (req, res) => {
   res.json({ status: "ok" });
 });
-
+mountSwagger(app)
 // Error handling middleware (must be after routes)
 app.use(
   (

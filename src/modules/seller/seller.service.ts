@@ -12,6 +12,7 @@ import { GetSellersQueryDto } from "./dto/get-sellers-query.dto";
 import { SellerResponseDto } from "./dto/seller-response.dto";
 import { PaginatedResponseDto } from "../../common/dto/paginated-response.dto";
 import { getResponseAPI } from "../../common/getResponseAPI";
+import { referralService } from "../referral/referral.service";
 
 export class SellerService {
   constructor(
@@ -226,6 +227,14 @@ export class SellerService {
     seller.approvedBy = approvedBy;
 
     const updatedSeller = await this.sellerRepository.save(seller);
+
+    // Process referral commission if this seller was referred
+    try {
+      await referralService.processSellerReferralCommission(id);
+    } catch (error) {
+      console.error("Failed to process seller referral commission:", error);
+      // Don't fail the approval process if referral processing fails
+    }
 
     return this.mapToResponseDto(updatedSeller);
   }

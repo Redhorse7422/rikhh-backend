@@ -3,7 +3,6 @@ import handlebars from "handlebars";
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
-import { paymentConfig } from "../../config/payment.config";
 import { Order } from "../../modules/checkout/entities/order.entity";
 import { ORDER_STATUS } from "../../modules/checkout/entities/order.enums";
 
@@ -31,38 +30,15 @@ export class EmailService {
   private transporter: nodemailer.Transporter;
 
   constructor() {
-    // if (
-    //   process.env.NODE_ENV === "development" ||
-    //   process.env.USE_ETHEREAL === "true"
-    // ) {
-    // Use Ethereal for testing
-    //   nodemailer.createTestAccount().then((testAccount) => {
-    //     this.transporter = nodemailer.createTransport({
-    //       host: testAccount.smtp.host,
-    //       port: testAccount.smtp.port,
-    //       secure: testAccount.smtp.secure,
-    //       auth: {
-    //         user: testAccount.user,
-    //         pass: testAccount.pass,
-    //       },
-    //     });
-    //     console.log("Ethereal test account created. Login:", testAccount.user);
-    //     console.log("Ethereal test account password:", testAccount.pass);
-    //   });
-    // } else {
     this.transporter = nodemailer.createTransport({
-      host: paymentConfig.email.host,
-      port: paymentConfig.email.port,
-      secure: paymentConfig.email.secure,
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_SECURE === 'true',
       auth: {
-        user: paymentConfig.email.user,
-        pass: paymentConfig.email.pass,
-      },
-      tls: {
-        rejectUnauthorized: false,
+        user: process.env.SMTP_USER || '',
+        pass: process.env.SMTP_PASS || '',
       },
     });
-    // }
   }
 
   async sendOrderConfirmation(data: EmailData): Promise<boolean> {
@@ -71,7 +47,7 @@ export class EmailService {
       const html = this.generateOrderConfirmationEmail(data);
 
       await this.transporter.sendMail({
-        from: paymentConfig.email.from,
+        from: process.env.SMTP_FROM || 'noreply@rikhh.com',
         to: data.customerEmail,
         subject,
         html,
@@ -114,7 +90,7 @@ export class EmailService {
       }
 
       await this.transporter.sendMail({
-        from: paymentConfig.email.from,
+        from: process.env.SMTP_FROM || 'noreply@rikhh.com',
         to: data.customerEmail,
         subject,
         html,
