@@ -19,6 +19,7 @@
     "migrate:firebase": "ts-node src/scripts/firebase-migration.ts",
     "test:migration": "ts-node src/scripts/test-migration-setup.ts",
     "test:seller": "ts-node src/scripts/test-seller-migration.ts",
+    "test:seller-order": "ts-node src/scripts/test-seller-order-system.ts",
     "docs:postman": "node scripts/generate-postman.js"
   },
   "keywords": [

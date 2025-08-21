@@ -621,6 +621,14 @@ export class CheckoutService {
           // Don't fail the order process if referral processing fails
         }
 
+        // Notify sellers about the new order
+        try {
+          await this.notifySellersAboutOrder(savedOrder, orderItems);
+        } catch (error) {
+          console.error("Failed to notify sellers about order:", error);
+          // Don't fail the order process if seller notification fails
+        }
+
         // Create shipment for all orders (including cash on delivery)
         let trackingNumber: string | undefined;
         const shippingItems = session.items.map((item: any) => ({
@@ -704,7 +712,11 @@ export class CheckoutService {
               quantity: item.quantity,
               unitPrice: item.unitPrice,
               totalPrice: item.totalPrice,
-              selectedVariants: item.selectedVariants,
+              selectedVariants: item.selectedVariants?.map(variant => ({
+                attributeName: variant.attributeName,
+                attributeValue: variant.variantValue,
+                attributePrice: variant.attributePrice
+              })) || [],
             })),
             shippingAddress: savedOrder.shippingAddress,
             createdAt: savedOrder.createdAt,
@@ -735,7 +747,7 @@ export class CheckoutService {
     for (const item of cartItems) {
       const product = await this.productRepository.findOne({
         where: { id: item.productId },
-        relations: ["attributes", "attributes.values"], // Ensure attribute values are loaded
+        relations: ["attributes", "attributes.values", "categories"], // Ensure categories are loaded
       });
 
       if (!product) {
@@ -899,7 +911,7 @@ export class CheckoutService {
           coupon.applicableCategories.length > 0
         ) {
           const productCategoryIds =
-            product.categories?.map((cat) => cat.id) || [];
+            product.categories?.map((cat: any) => cat.id) || [];
           if (
             productCategoryIds.some((catId) =>
               coupon.applicableCategories.includes(catId)
@@ -960,7 +972,7 @@ export class CheckoutService {
           coupon.applicableCategories.length > 0
         ) {
           const productCategoryIds =
-            product.categories?.map((cat) => cat.id) || [];
+            product.categories?.map((cat: any) => cat.id) || [];
           if (
             productCategoryIds.some((catId) =>
               coupon.applicableCategories.includes(catId)
@@ -1279,6 +1291,52 @@ export class CheckoutService {
     } catch (error) {
       console.error("Error getting user cart items:", error);
       throw new Error("Failed to retrieve cart items");
+    }
+  }
+
+  private async notifySellersAboutOrder(order: Order, orderItems: OrderItem[]): Promise<void> {
+    try {
+      const sellerIds = new Set<string>();
+      
+      // Collect all seller IDs from order items
+      for (const item of orderItems) {
+        const product = await this.productRepository.findOne({
+          where: { id: item.productId },
+          relations: ['seller']
+        });
+        
+        if (product?.sellerId) {
+          sellerIds.add(product.sellerId);
+        }
+      }
+
+      // Update order status to seller notified
+      order.status = ORDER_STATUS.SELLER_NOTIFIED;
+      await this.orderRepository.save(order);
+
+      // Create status history entry
+      const statusHistory = this.orderStatusHistoryRepository.create({
+        orderId: order.id,
+        status: ORDER_STATUS.SELLER_NOTIFIED,
+        previousStatus: ORDER_STATUS.PENDING,
+        notes: "Order notified to sellers",
+        notificationSent: true
+      });
+      await this.orderStatusHistoryRepository.save(statusHistory);
+
+      // Send notifications to all relevant sellers
+      for (const sellerId of sellerIds) {
+        try {
+          const { SellerNotificationService } = await import('./services/seller-notification.service');
+          const sellerNotificationService = new SellerNotificationService(this.dataSource);
+          await sellerNotificationService.sendNewOrderNotification(order, sellerId);
+        } catch (error) {
+          console.error(`Failed to notify seller ${sellerId}:`, error);
+        }
+      }
+    } catch (error) {
+      console.error("Error notifying sellers about order:", error);
+      throw error;
     }
   }
 }

@@ -13,6 +13,126 @@ import { MediaFile } from "../../media/media-file.entity";
 import { Attribute } from "../../attributes/entities/attribute.entity";
 import { Seller } from "../../seller/entities/seller.entity";
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Product:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *           description: Unique identifier for the product
+ *         addedBy:
+ *           type: string
+ *           nullable: true
+ *           description: ID of the user who added the product
+ *         userId:
+ *           type: string
+ *           nullable: true
+ *           description: ID of the user who owns the product
+ *         sellerId:
+ *           type: string
+ *           nullable: true
+ *           description: ID of the seller who owns the product
+ *         name:
+ *           type: string
+ *           description: Product name
+ *           example: "Premium Wireless Headphones"
+ *         slug:
+ *           type: string
+ *           description: Product slug for URL generation
+ *           example: "premium-wireless-headphones"
+ *         thumbnailImgId:
+ *           type: string
+ *           nullable: true
+ *           description: ID of the thumbnail image
+ *         tags:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Product tags
+ *           example: ["wireless", "bluetooth", "audio"]
+ *         shortDescription:
+ *           type: string
+ *           nullable: true
+ *           description: Short product description
+ *         longDescription:
+ *           type: string
+ *           nullable: true
+ *           description: Detailed product description
+ *         regularPrice:
+ *           type: number
+ *           format: decimal
+ *           nullable: true
+ *           description: Regular product price
+ *           example: 99.99
+ *         salePrice:
+ *           type: number
+ *           format: decimal
+ *           nullable: true
+ *           description: Sale price of the product
+ *           example: 79.99
+ *         isVariant:
+ *           type: boolean
+ *           description: Whether product has variants
+ *           example: false
+ *         published:
+ *           type: boolean
+ *           description: Whether product is published
+ *           example: true
+ *         approved:
+ *           type: boolean
+ *           description: Whether product is approved
+ *           example: true
+ *         stock:
+ *           type: integer
+ *           nullable: true
+ *           description: Available stock quantity
+ *           example: 50
+ *         cashOnDelivery:
+ *           type: boolean
+ *           description: Whether cash on delivery is accepted
+ *           example: true
+ *         featured:
+ *           type: boolean
+ *           description: Whether product is featured
+ *           example: false
+ *         discount:
+ *           type: number
+ *           format: decimal
+ *           nullable: true
+ *           description: Discount amount
+ *           example: 20.00
+ *         discountType:
+ *           type: string
+ *           nullable: true
+ *           description: Type of discount
+ *           example: "percentage"
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Product creation timestamp
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Product last update timestamp
+ *         seller:
+ *           $ref: '#/components/schemas/Seller'
+ *           description: Seller information
+ *         photos:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/MediaFile'
+ *           description: Product photos
+ *         categories:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Category'
+ *           description: Product categories
+ */
+
 @Entity("products")
 export class Product extends BaseEntity {
   @Column({ nullable: true })

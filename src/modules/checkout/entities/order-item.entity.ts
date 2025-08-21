@@ -5,11 +5,106 @@ import { Product } from '../../products/entities/product.entity';
 
 export interface SelectedVariant {
   attributeId: string;
-  attributeValueId: string;
   attributeName: string;
-  attributeValue: string;
+  variantValue: string;
   attributePrice: number;
 }
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     OrderItem:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *           description: Unique identifier for the order item
+ *         orderId:
+ *           type: string
+ *           format: uuid
+ *           description: ID of the order this item belongs to
+ *         productId:
+ *           type: string
+ *           format: uuid
+ *           description: ID of the product
+ *         productName:
+ *           type: string
+ *           description: Name of the product at time of order
+ *           example: "Premium Wireless Headphones"
+ *         productSlug:
+ *           type: string
+ *           nullable: true
+ *           description: Product slug for URL generation
+ *           example: "premium-wireless-headphones"
+ *         quantity:
+ *           type: integer
+ *           description: Quantity of the product ordered
+ *           example: 2
+ *         unitPrice:
+ *           type: number
+ *           format: decimal
+ *           description: Unit price of the product at time of order
+ *           example: 49.99
+ *         totalPrice:
+ *           type: number
+ *           format: decimal
+ *           description: Total price for this item (unitPrice * quantity)
+ *           example: 99.98
+ *         productSnapshot:
+ *           type: object
+ *           additionalProperties: true
+ *           description: Snapshot of product data at time of order
+ *         selectedVariants:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               attributeId:
+ *                 type: string
+ *                 format: uuid
+ *               attributeName:
+ *                 type: string
+ *               variantValue:
+ *                 type: string
+ *               attributePrice:
+ *                 type: number
+ *           description: Selected product variants and their prices
+ *         sku:
+ *           type: string
+ *           nullable: true
+ *           description: Product SKU
+ *           example: "HW-001-BLK"
+ *         taxAmount:
+ *           type: number
+ *           format: decimal
+ *           description: Tax amount for this item
+ *           example: 8.99
+ *         discountAmount:
+ *           type: number
+ *           format: decimal
+ *           description: Discount amount applied to this item
+ *           example: 5.00
+ *         thumbnailImage:
+ *           type: string
+ *           nullable: true
+ *           description: Product thumbnail image URL
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Order item creation timestamp
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Order item last update timestamp
+ *         order:
+ *           $ref: '#/components/schemas/Order'
+ *           description: Order this item belongs to
+ *         product:
+ *           $ref: '#/components/schemas/Product'
+ *           description: Product information
+ */
 
 @Entity('order_items')
 export class OrderItem extends BaseEntity {

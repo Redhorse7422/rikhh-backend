@@ -1196,7 +1196,7 @@
           "response": []
         },
         {
-          "name": "Apply coupon code",
+          "name": "Apply coupon to checkout",
           "request": {
             "method": "POST",
             "header": [],
@@ -1225,7 +1225,7 @@
           "response": []
         },
         {
-          "name": "Confirm order",
+          "name": "Confirm and place order",
           "request": {
             "method": "POST",
             "header": [],
@@ -1416,45 +1416,216 @@
       ]
     },
     {
-      "name": "Webhooks",
+      "name": "Seller Orders",
       "item": [
         {
-          "name": "Authorize.net webhook",
+          "name": "Get seller's orders",
           "request": {
-            "method": "POST",
-            "header": [],
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/checkout/webhooks/authorize-net",
+              "raw": "{{baseUrl}}/api/v1/seller/orders",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "v1",
-                "checkout",
-                "webhooks",
-                "authorize-net"
+                "seller",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": 1,
+                  "description": "Page number for pagination",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": 10,
+                  "description": "Number of items per page",
+                  "disabled": false
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Filter orders by status",
+                  "disabled": false
+                }
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Stripe webhook",
+          "name": "Accept an order",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/checkout/webhooks/stripe",
+              "raw": "{{baseUrl}}/api/v1/seller/orders/accept",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "v1",
-                "checkout",
-                "webhooks",
-                "stripe"
+                "seller",
+                "orders",
+                "accept"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update order status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/seller/orders/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "seller",
+                "orders",
+                "status"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get seller notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/seller/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "seller",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": 1,
+                  "description": "Page number for pagination",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": 20,
+                  "description": "Number of notifications per page",
+                  "disabled": false
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark notification as read",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/seller/notifications/{notificationId}/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "seller",
+                "notifications",
+                "{notificationId}",
+                "{{notificationId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get commission summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/seller/commissions/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "seller",
+                "commissions",
+                "summary"
               ]
             }
           },
@@ -3376,6 +3547,11 @@
     {
       "key": "checkoutId",
       "value": "your_checkoutId_here",
+      "type": "string"
+    },
+    {
+      "key": "notificationId",
+      "value": "your_notificationId_here",
       "type": "string"
     },
     {

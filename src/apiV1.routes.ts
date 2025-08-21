@@ -12,6 +12,7 @@ import sellerRoutes from "./modules/seller/seller.routes";
 import couponRoutes from "./modules/coupon/coupon.routes";
 import orderRoutes from "./modules/order/order.routes";
 import referralRoutes from "./modules/referral/referral.routes";
+import { createSellerOrderRoutes } from "./modules/checkout/routes/seller-order.routes";
 
 const Router = r();
 
@@ -28,5 +29,6 @@ Router.use("/sellers", sellerRoutes);
 Router.use("/coupons", couponRoutes);
 Router.use("/orders", orderRoutes);
 Router.use("/referrals", referralRoutes);
+Router.use("/seller", createSellerOrderRoutes(require("./config/database").AppDataSource));
 
 export { Router };

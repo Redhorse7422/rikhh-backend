@@ -36,6 +36,8 @@ export const AppDataSource = new DataSource({
     `${basePath}/modules/checkout/entities/order-item.entity.${extension}`,
     `${basePath}/modules/checkout/entities/order-status-history.entity.${extension}`,
     `${basePath}/modules/checkout/entities/shipping-address.entity.${extension}`,
+    `${basePath}/modules/checkout/entities/commission.entity.${extension}`,
+    `${basePath}/modules/checkout/entities/seller-notification.entity.${extension}`,
     `${basePath}/modules/coupon/coupon.entity.${extension}`,
     `${basePath}/modules/address/address.entity.${extension}`,
     `${basePath}/modules/seller/entities/seller.entity.${extension}`,
